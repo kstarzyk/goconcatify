@@ -38,42 +38,35 @@ func remove(path string) {
 }
 
 type concatifyTest struct {
-	first, second, result, model string
-	options                      ConcatedImageOptions
+	name          string
+	paths         []string
+	result, model string
+	options       ConcatedImageOptions
 }
 
-var TEST_GOLANG_PNG = "./mocks/golang.png"
-var TEST_GOLANG_AVIATOR_PNG = "./mocks/golang-aviator.png"
-var TEST_RESULT_VER_PNG = "./mocks/golang-and-golang-aviator-ver.png"
-var TEST_RESULT_HOR_PNG = "./mocks/test-result-ver.png"
-var TEST_MODEL_RESULT_VER_PNG = "./mocks/test-result-ver.png"
-var TEST_MODEL_RESULT_HOR_PNG = "./mocks/test-result-hor.png"
-var TEST_DEFAULT_PNG_OPTIONS = ConcatedImageOptions{VERTICAL, false, false}
-var TEST_HOR_PNG_OPTIONS = ConcatedImageOptions{HORIZONTAL, false, false}
+var (
+	TEST_GOLANG_PNG           = "./mocks/golang.png"
+	TEST_GOLANG_AVIATOR_PNG   = "./mocks/golang-aviator.png"
+	TEST_RESULT_VER_PNG       = "./mocks/golang-and-golang-aviator-ver.png"
+	TEST_RESULT_HOR_PNG       = "./mocks/golang-ang-golang-aviator-hor.png"
+	TEST_MODEL_RESULT_VER_PNG = "./mocks/test-result-ver.png"
+	TEST_MODEL_RESULT_HOR_PNG = "./mocks/test-result-hor.png"
+	TEST_DEFAULT_PNG_OPTIONS  = ConcatedImageOptions{VERTICAL, false, false}
+	TEST_HOR_PNG_OPTIONS      = ConcatedImageOptions{HORIZONTAL, false, false}
+)
 
 var concatifyTests = []concatifyTest{
-	{TEST_GOLANG_PNG, TEST_GOLANG_AVIATOR_PNG, TEST_RESULT_VER_PNG, TEST_MODEL_RESULT_VER_PNG, TEST_DEFAULT_PNG_OPTIONS},
+	{"Concat two files vertical (default settings)", []string{TEST_GOLANG_PNG, TEST_GOLANG_AVIATOR_PNG}, TEST_RESULT_VER_PNG, TEST_MODEL_RESULT_VER_PNG, TEST_DEFAULT_PNG_OPTIONS},
+	{"Concat two files horizontal", []string{TEST_GOLANG_PNG, TEST_GOLANG_AVIATOR_PNG}, TEST_RESULT_HOR_PNG, TEST_MODEL_RESULT_HOR_PNG, TEST_HOR_PNG_OPTIONS},
 }
 
-func TestDrawVertical(t *testing.T) {
-	cimg := NewConcatedImage([]string{TEST_GOLANG_PNG, TEST_GOLANG_AVIATOR_PNG})
-	cimg.Draw(TEST_RESULT_VER_PNG)
-	res := comparePNG(TEST_RESULT_VER_PNG, TEST_MODEL_RESULT_VER_PNG)
-	if !res {
-		t.Errorf("Test failed")
-		remove(TEST_RESULT_VER_PNG)
+func TestDraw(t *testing.T) {
+	for _, test := range concatifyTests {
+		cimg := NewConcatedImage(test.paths, test.options)
+		cimg.Draw(test.result)
+		if !comparePNG(test.result, test.model) {
+			t.Errorf("%s: result (%s) and model(%s) images are different!", test.name, test.result, test.model)
+		}
+		remove(test.result)
 	}
-
-	remove(TEST_RESULT_VER_PNG)
-}
-
-func TestDrawHorizontal(t *testing.T) {
-	cimg := NewConcatedImage([]string{TEST_GOLANG_PNG, TEST_GOLANG_AVIATOR_PNG}, TEST_HOR_PNG_OPTIONS)
-	cimg.Draw(TEST_RESULT_HOR_PNG)
-	res := comparePNG(TEST_RESULT_HOR_PNG, TEST_MODEL_RESULT_HOR_PNG)
-	if !res {
-		t.Errorf("Test failed")
-	}
-
-	remove(TEST_RESULT_HOR_PNG)
 }
