@@ -1,0 +1,2 @@
+# goconcatify
+Golang concat library
