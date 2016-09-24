@@ -8,9 +8,15 @@ package main
 import "github.com/kstarzyk/concatify"
 
 func main() {
-  concated := concatify.NewConcatedImage([]string{"/path/to/image1", "path/to/image2"}) 
+  concated, err := concatify.NewConcatedImage([]string{"/path/to/image1", "path/to/image2"}) 
+  if err != nil {
+    ...
+  }
   concated.Draw("./output-vertical.png")
-  concatedHorizontal := concatify.NewConcatedImage([]string{"/path/to/image1", "path/to/image2", ConcatedImageOptions{HORIZONTAL, false, false})
+  concatedHorizontal, err := concatify.NewConcatedImage([]string{"/path/to/image1", "path/to/image2", ConcatedImageOptions{HORIZONTAL, false, false})
+    if err != nil {
+    ...
+  }
   concatedHorizontal.Draw("./output-horizontal.png")
 }
 ```
