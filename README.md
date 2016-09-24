@@ -9,9 +9,9 @@ import "github.com/kstarzyk/concatify"
 
 func main() {
   concated := concatify.NewConcatedImage([]string{"/path/to/image1", "path/to/image2"}) 
-  concated.Draw("output-vertical.png")
+  concated.Draw("./output-vertical.png")
   concatedHorizontal := concatify.NewConcatedImage([]string{"/path/to/image2", "path/to/image3", ConcatedImageOptions{HORIZONTAL, false, false})
-  concated.Draw("output-horizontal.png")
+  concated.Draw("./output-horizontal.png")
 }
 ```
 
