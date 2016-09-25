@@ -42,7 +42,7 @@ func getDefaultOptions() ConcatedImageOptions {
 		SameHeight: false,
 	}
 }
-func NewConcatedImage(paths []string, options ...ConcatedImageOptions) *ConcatedImage {
+func NewConcatedImage(paths []string, options ...ConcatedImageOptions) (*ConcatedImage, error) {
 	ci := &ConcatedImage{}
 	var opt ConcatedImageOptions
 	if len(options) == 0 {
@@ -56,9 +56,11 @@ func NewConcatedImage(paths []string, options ...ConcatedImageOptions) *Concated
 	for _, path := range paths {
 		img, _, err := openAndDecode(path)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		ci.images = append(ci.images, img)
+		if len(ci.images) == 0 {
+			ci.images = append(ci.images, img)
+		}
 
 		var imgPixels []*Pixel
 		if ci.Direction == VERTICAL {
@@ -78,7 +80,7 @@ func NewConcatedImage(paths []string, options ...ConcatedImageOptions) *Concated
 		ci.pixels = append(ci.pixels, imgPixels...)
 
 	}
-	return ci
+	return ci, nil
 }
 
 func (ci *ConcatedImage) Draw(dest string) {
