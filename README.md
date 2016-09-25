@@ -1,4 +1,4 @@
-# goconcatify [development]
+# goconcatify [development] [![Build Status](https://travis-ci.org/kstarzyk/goconcatify.svg?branch=tests%2Frefactor)](https://travis-ci.org/kstarzyk/goconcatify)
 Golang [image] concat library
 
 ## Example
