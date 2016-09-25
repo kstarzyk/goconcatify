@@ -57,7 +57,7 @@ var (
 	TEST_MODEL_RESULT_VER_PNG = "./mocks/test-result-ver.png"
 	TEST_MODEL_RESULT_HOR_PNG = "./mocks/test-result-hor.png"
 	TEST_FAKE_PATH            = "./fake-path.png"
-	TEST_NOT_IMAGE            = "./readme.md"
+	TEST_NOT_IMAGE            = "./README.md"
 	TEST_DEFAULT_PNG_OPTIONS  = ConcatedImageOptions{VERTICAL, false, false}
 	TEST_HOR_PNG_OPTIONS      = ConcatedImageOptions{HORIZONTAL, false, false}
 )
