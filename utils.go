@@ -21,11 +21,27 @@ func openAndDecode(filepath string) (image.Image, string, error) {
 	return img, format, nil
 }
 
-func DecodePixelsFromImage(img image.Image, offsetX, offsetY int) []*Pixel {
-	pixels := []*Pixel{}
+func readImagesFromPaths(paths []string) ([]image.Image, error) {
+	var images = make([]image.Image, len(paths))
+	for i, path := range paths {
+		img, _, err := openAndDecode(path)
+		if err != nil {
+			return nil, err
+		}
+		if img != nil {
+			images[i] = img
+		}
+	}
+
+	return images, nil
+}
+
+func decodePixelsFromImage(img image.Image, offsetX, offsetY int) []Pixel {
+
+	pixels := []Pixel{}
 	for y := 0; y < img.Bounds().Max.Y; y++ {
 		for x := 0; x <= img.Bounds().Max.X; x++ {
-			pixels = append(pixels, &Pixel{
+			pixels = append(pixels, Pixel{
 				Point: image.Point{x + offsetX, y + offsetY},
 				Color: img.At(x, y),
 			})

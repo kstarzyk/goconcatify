@@ -8,110 +8,137 @@ import (
 	"os"
 )
 
+type Arrangment string
+
+var orientation Arrangment
+
+const (
+	Vertical   Arrangment = "vertical"
+	Horizontal Arrangment = "horizontal"
+	Grid       Arrangment = "grid"
+)
+
 type Pixel struct {
 	Point image.Point
 	Color color.Color
 }
 
-type direction uint8
-
-const (
-	VERTICAL direction = iota
-	HORIZONTAL
-)
-
-type ConcatedImage struct {
-	images    []image.Image
-	pixels    []*Pixel
-	format    string
-	maxWidth  int
-	maxHeight int
-	ConcatedImageOptions
+type ConcatImage struct {
+	Sources    []string
+	Strategy   ConcatStrategy
+	Params     ConcatParams
+	finalImage *image.RGBA
 }
 
-type ConcatedImageOptions struct {
-	Direction  direction
-	SameWidth  bool
-	SameHeight bool
+type ConcatParams struct {
+	Display  Arrangment
+	SameSize bool
+	Rows     int
+	Cols     int
 }
 
-func getDefaultOptions() ConcatedImageOptions {
-	return ConcatedImageOptions{
-		Direction:  VERTICAL,
-		SameWidth:  false,
-		SameHeight: false,
-	}
-}
-func NewConcatedImage(paths []string, options ...ConcatedImageOptions) (*ConcatedImage, error) {
-	ci := &ConcatedImage{}
-	var opt ConcatedImageOptions
-	if len(options) == 0 {
-		opt = getDefaultOptions()
-	} else {
-		opt = options[0]
-	}
-	ci.Direction = opt.Direction
-	ci.maxHeight = 0
-	ci.maxWidth = 0
-	for _, path := range paths {
-		img, _, err := openAndDecode(path)
-		if err != nil {
-			return nil, err
+type ConcatStrategy func([]image.Image, ConcatParams) ([]Pixel, int, int)
+
+func verticalConcatStrategy(images []image.Image, params ConcatParams) (pixels []Pixel, w int, h int) {
+	w, h = 0, 0
+	for _, img := range images {
+		if img == nil {
+			continue
 		}
-		if len(ci.images) == 0 {
-			ci.images = append(ci.images, img)
+		imgPixels := decodePixelsFromImage(img, 0, h)
+		if img.Bounds().Max.X > w {
+			w = img.Bounds().Max.X
 		}
-
-		var imgPixels []*Pixel
-		if ci.Direction == VERTICAL {
-			imgPixels = DecodePixelsFromImage(img, 0, ci.maxHeight)
-			if img.Bounds().Max.X > ci.maxWidth {
-				ci.maxWidth = img.Bounds().Max.X
-			}
-			ci.maxHeight += img.Bounds().Max.Y
-		} else {
-			imgPixels = DecodePixelsFromImage(img, ci.maxWidth, 0)
-			if img.Bounds().Max.Y > ci.maxHeight {
-				ci.maxHeight = img.Bounds().Max.Y
-			}
-			ci.maxWidth += img.Bounds().Max.X
-		}
-
-		ci.pixels = append(ci.pixels, imgPixels...)
-
+		h += img.Bounds().Max.Y
+		pixels = append(pixels, imgPixels...)
 	}
-	return ci, nil
+	return pixels, w, h
 }
 
-func (ci *ConcatedImage) Draw(dest string) {
+func horizontalConcatStrategy(images []image.Image, params ConcatParams) (pixels []Pixel, w int, h int) {
+	w, h = 0, 0
+	for _, img := range images {
+		imgPixels := decodePixelsFromImage(img, w, 0)
+		if img.Bounds().Max.Y > h {
+			h = img.Bounds().Max.Y
+		}
+		w += img.Bounds().Max.X
+		pixels = append(pixels, imgPixels...)
+	}
+
+	return pixels, w, h
+}
+
+func gridConcatStrategy(images []image.Image, params ConcatParams) (pixels []Pixel, w int, h int) {
+	w, h = 0, 0
+	for _, img := range images {
+		imgPixels := decodePixelsFromImage(img, 0, h)
+		if img.Bounds().Max.X > w {
+			w = img.Bounds().Max.X
+		}
+		h += img.Bounds().Max.Y
+		pixels = append(pixels, imgPixels...)
+	}
+	return pixels, w, h
+}
+
+func NewConcatImage(sources []string, params ConcatParams) (*ConcatImage, error) {
+
+	cimg := &ConcatImage{}
+	cimg.Sources = sources
+	cimg.Params = params
+
+	switch params.Display {
+	case Vertical:
+		cimg.Strategy = verticalConcatStrategy
+	case Horizontal:
+		cimg.Strategy = horizontalConcatStrategy
+	case Grid:
+		cimg.Strategy = gridConcatStrategy
+	default:
+		panic(params.Display)
+	}
+
+	err := cimg.draw()
+
+	return cimg, err
+}
+
+func (cimg *ConcatImage) draw() error {
+	images, err := readImagesFromPaths(cimg.Sources)
+	if err != nil {
+		return err
+	}
+	pixels, w, h := cimg.Strategy(images, cimg.Params)
+
 	newRect := image.Rectangle{
-		Min: ci.images[0].Bounds().Min,
+		Min: images[0].Bounds().Min,
 		Max: image.Point{
-			X: ci.maxWidth,
-			Y: ci.maxHeight,
+			X: w,
+			Y: h,
 		},
 	}
 
-	finalImage := image.NewRGBA(newRect)
-
-	for _, px := range ci.pixels {
-		finalImage.Set(
+	cimg.finalImage = image.NewRGBA(newRect)
+	for _, px := range pixels {
+		cimg.finalImage.Set(
 			px.Point.X,
 			px.Point.Y,
 			px.Color,
 		)
 	}
-	draw.Draw(finalImage, finalImage.Bounds(), finalImage, image.Point{0, 0}, draw.Src)
+	draw.Draw(cimg.finalImage, cimg.finalImage.Bounds(), cimg.finalImage, image.Point{0, 0}, draw.Src)
+	return nil
+}
 
-	out, err := os.Create(dest)
+func (cimg *ConcatImage) Save(path string) {
+	out, err := os.Create(path)
 	if err != nil {
 		panic(err)
-		os.Exit(1)
 	}
 
-	err = png.Encode(out, finalImage)
+	err = png.Encode(out, cimg.finalImage)
 	if err != nil {
 		panic(err)
-		os.Exit(1)
 	}
 }

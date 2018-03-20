@@ -41,7 +41,7 @@ type concatifyTest struct {
 	name          string
 	paths         []string
 	result, model string
-	options       ConcatedImageOptions
+	options       ConcatParams
 }
 
 type concatifyTestFail struct {
@@ -58,8 +58,8 @@ var (
 	TEST_MODEL_RESULT_HOR_PNG = "./mocks/test-result-hor.png"
 	TEST_FAKE_PATH            = "./fake-path.png"
 	TEST_NOT_IMAGE            = "./README.md"
-	TEST_DEFAULT_PNG_OPTIONS  = ConcatedImageOptions{VERTICAL, false, false}
-	TEST_HOR_PNG_OPTIONS      = ConcatedImageOptions{HORIZONTAL, false, false}
+	TEST_DEFAULT_PNG_OPTIONS  = ConcatParams{"vertical", true, 1, 1}
+	TEST_HOR_PNG_OPTIONS      = ConcatParams{"horizontal", true, 1, 1}
 )
 
 var concatifyTests = []concatifyTest{
@@ -74,11 +74,11 @@ var concatifyTestsFail = []concatifyTestFail{
 
 func TestDraw(t *testing.T) {
 	for _, test := range concatifyTests {
-		cimg, err := NewConcatedImage(test.paths, test.options)
+		cimg, err := NewConcatImage(test.paths, test.options)
 		if err != nil {
 			t.Error(err)
 		}
-		cimg.Draw(test.result)
+		cimg.Save(test.result)
 		if !comparePNG(test.result, test.model) {
 			t.Errorf("%s: result (%s) and model(%s) images are different!", test.name, test.result, test.model)
 		}
@@ -88,7 +88,7 @@ func TestDraw(t *testing.T) {
 
 func TestDrawFail(t *testing.T) {
 	for _, test := range concatifyTestsFail {
-		cimg, err := NewConcatedImage(test.paths, test.options)
+		cimg, err := NewConcatImage(test.paths, test.options)
 		_ = cimg
 		if err != nil {
 			if err.Error() != test.expectedErrorMessage {
@@ -102,8 +102,7 @@ func TestDrawFail(t *testing.T) {
 func BenchmarkDraw10(t *testing.B) {
 	test := concatifyTests[1]
 	for n := 0; n < 10; n++ {
-		cimg, _ := NewConcatedImage(test.paths)
-		cimg.Draw(test.result)
+		_, _ = NewConcatImage(test.paths, TEST_DEFAULT_PNG_OPTIONS)
 	}
 	remove(test.result)
 }
