@@ -25,7 +25,7 @@ type pixel struct {
 
 type ConcatImage struct {
 	Sources    []string
-	Strategy   ConcatStrategy
+	Strategy   concatStrategy
 	Params     concatParams
 	finalImage *image.RGBA
 }
@@ -37,7 +37,7 @@ type concatParams struct {
 	Cols     int
 }
 
-type ConcatStrategy func([]image.Image, concatParams) (pixels []*pixel, w int, h int)
+type concatStrategy func([]image.Image, concatParams) (pixels []*pixel, w int, h int)
 
 func verticalConcatStrategy(images []image.Image, params concatParams) (pixels []*pixel, w int, h int) {
 	w, h = 0, 0

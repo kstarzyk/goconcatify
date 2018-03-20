@@ -102,8 +102,8 @@ func TestDrawFail(t *testing.T) {
 func BenchmarkDraw10(t *testing.B) {
 	test := concatifyTests[1]
 	for n := 0; n < 10; n++ {
-		_, _ = new(test.paths, TEST_DEFAULT_PNG_OPTIONS)
-		_, _ = new(test.paths, TEST_HOR_PNG_OPTIONS)
+		_, _ = NewVertical(test.paths)
+		_, _ = NewHorizontal(test.paths)
 
 	}
 	remove(test.result)
