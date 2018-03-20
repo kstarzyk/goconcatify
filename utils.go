@@ -36,12 +36,10 @@ func readImagesFromPaths(paths []string) ([]image.Image, error) {
 	return images, nil
 }
 
-func decodePixelsFromImage(img image.Image, offsetX, offsetY int) []Pixel {
-
-	pixels := []Pixel{}
+func decodePixelsFromImage(img image.Image, offsetX, offsetY int) (pixels []*pixel) {
 	for y := 0; y < img.Bounds().Max.Y; y++ {
 		for x := 0; x <= img.Bounds().Max.X; x++ {
-			pixels = append(pixels, Pixel{
+			pixels = append(pixels, &pixel{
 				Point: image.Point{x + offsetX, y + offsetY},
 				Color: img.At(x, y),
 			})

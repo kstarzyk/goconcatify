@@ -18,7 +18,7 @@ const (
 	Grid       Arrangment = "grid"
 )
 
-type Pixel struct {
+type pixel struct {
 	Point image.Point
 	Color color.Color
 }
@@ -26,20 +26,20 @@ type Pixel struct {
 type ConcatImage struct {
 	Sources    []string
 	Strategy   ConcatStrategy
-	Params     ConcatParams
+	Params     concatParams
 	finalImage *image.RGBA
 }
 
-type ConcatParams struct {
+type concatParams struct {
 	Display  Arrangment
 	SameSize bool
 	Rows     int
 	Cols     int
 }
 
-type ConcatStrategy func([]image.Image, ConcatParams) ([]Pixel, int, int)
+type ConcatStrategy func([]image.Image, concatParams) (pixels []*pixel, w int, h int)
 
-func verticalConcatStrategy(images []image.Image, params ConcatParams) (pixels []Pixel, w int, h int) {
+func verticalConcatStrategy(images []image.Image, params concatParams) (pixels []*pixel, w int, h int) {
 	w, h = 0, 0
 	for _, img := range images {
 		if img == nil {
@@ -55,7 +55,7 @@ func verticalConcatStrategy(images []image.Image, params ConcatParams) (pixels [
 	return pixels, w, h
 }
 
-func horizontalConcatStrategy(images []image.Image, params ConcatParams) (pixels []Pixel, w int, h int) {
+func horizontalConcatStrategy(images []image.Image, params concatParams) (pixels []*pixel, w int, h int) {
 	w, h = 0, 0
 	for _, img := range images {
 		imgPixels := decodePixelsFromImage(img, w, 0)
@@ -69,7 +69,7 @@ func horizontalConcatStrategy(images []image.Image, params ConcatParams) (pixels
 	return pixels, w, h
 }
 
-func gridConcatStrategy(images []image.Image, params ConcatParams) (pixels []Pixel, w int, h int) {
+func gridConcatStrategy(images []image.Image, params concatParams) (pixels []*pixel, w int, h int) {
 	w, h = 0, 0
 	for _, img := range images {
 		imgPixels := decodePixelsFromImage(img, 0, h)
@@ -82,7 +82,11 @@ func gridConcatStrategy(images []image.Image, params ConcatParams) (pixels []Pix
 	return pixels, w, h
 }
 
-func NewConcatImage(sources []string, params ConcatParams) (*ConcatImage, error) {
+// func NewGrid(sources []string, rows, columns int) (*ConcatImage, error) {
+// 	return new(sources, concatParams{"grid", true, 1, 1})
+// }
+
+func new(sources []string, params concatParams) (*ConcatImage, error) {
 
 	cimg := &ConcatImage{}
 	cimg.Sources = sources
@@ -109,6 +113,7 @@ func (cimg *ConcatImage) draw() error {
 	if err != nil {
 		return err
 	}
+
 	pixels, w, h := cimg.Strategy(images, cimg.Params)
 
 	newRect := image.Rectangle{
@@ -141,4 +146,12 @@ func (cimg *ConcatImage) Save(path string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func NewVertical(sources []string) (*ConcatImage, error) {
+	return new(sources, concatParams{"vertical", true, 1, 1})
+}
+
+func NewHorizontal(sources []string) (*ConcatImage, error) {
+	return new(sources, concatParams{"horizontal", true, 1, 1})
 }

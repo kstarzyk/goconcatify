@@ -1,4 +1,4 @@
-# goconcatify [development] [![Build Status](https://travis-ci.org/kstarzyk/goconcatify.svg?branch=tests%2Frefactor)](https://travis-ci.org/kstarzyk/goconcatify)
+# goconcatify [![Build Status](https://travis-ci.org/kstarzyk/goconcatify.svg?branch=tests%2Frefactor)](https://travis-ci.org/kstarzyk/goconcatify)
 Golang [image] concat library
 
 ## Example
@@ -8,22 +8,20 @@ package main
 import "github.com/kstarzyk/concatify"
 
 func main() {
-  concated, err := concatify.NewConcatedImage([]string{"/path/to/image1", "path/to/image2"}) 
+  paths := []string{"alpha.png", "omega.png"}
+  concated, err := concatify.NewVertical(paths) 
+  // concated, err := concatify.NewHorizontal(paths)  
   if err != nil {
     ...
   }
-  concated.Draw("./output-vertical.png")
-  concatedHorizontal, err := concatify.NewConcatedImage([]string{"/path/to/image1", "path/to/image2", ConcatedImageOptions{HORIZONTAL, false, false})
-    if err != nil {
-    ...
-  }
-  concatedHorizontal.Draw("./output-horizontal.png")
+  concated.Save("./output.png")
 }
 ```
 
 ## Todo 
-- Support different image formats (*.jpg, *.png)
-- Docs
+- [x] Horizontal/Vertical
+- [ ] Support different image formats (*.jpg, *.png)
+- [ ] Docs
 
 
 ## Tests

@@ -41,7 +41,7 @@ type concatifyTest struct {
 	name          string
 	paths         []string
 	result, model string
-	options       ConcatParams
+	options       concatParams
 }
 
 type concatifyTestFail struct {
@@ -58,8 +58,8 @@ var (
 	TEST_MODEL_RESULT_HOR_PNG = "./mocks/test-result-hor.png"
 	TEST_FAKE_PATH            = "./fake-path.png"
 	TEST_NOT_IMAGE            = "./README.md"
-	TEST_DEFAULT_PNG_OPTIONS  = ConcatParams{"vertical", true, 1, 1}
-	TEST_HOR_PNG_OPTIONS      = ConcatParams{"horizontal", true, 1, 1}
+	TEST_DEFAULT_PNG_OPTIONS  = concatParams{"vertical", true, 1, 1}
+	TEST_HOR_PNG_OPTIONS      = concatParams{"horizontal", true, 1, 1}
 )
 
 var concatifyTests = []concatifyTest{
@@ -74,7 +74,7 @@ var concatifyTestsFail = []concatifyTestFail{
 
 func TestDraw(t *testing.T) {
 	for _, test := range concatifyTests {
-		cimg, err := NewConcatImage(test.paths, test.options)
+		cimg, err := new(test.paths, test.options)
 		if err != nil {
 			t.Error(err)
 		}
@@ -88,7 +88,7 @@ func TestDraw(t *testing.T) {
 
 func TestDrawFail(t *testing.T) {
 	for _, test := range concatifyTestsFail {
-		cimg, err := NewConcatImage(test.paths, test.options)
+		cimg, err := new(test.paths, test.options)
 		_ = cimg
 		if err != nil {
 			if err.Error() != test.expectedErrorMessage {
@@ -102,7 +102,9 @@ func TestDrawFail(t *testing.T) {
 func BenchmarkDraw10(t *testing.B) {
 	test := concatifyTests[1]
 	for n := 0; n < 10; n++ {
-		_, _ = NewConcatImage(test.paths, TEST_DEFAULT_PNG_OPTIONS)
+		_, _ = new(test.paths, TEST_DEFAULT_PNG_OPTIONS)
+		_, _ = new(test.paths, TEST_HOR_PNG_OPTIONS)
+
 	}
 	remove(test.result)
 }
