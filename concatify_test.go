@@ -174,14 +174,15 @@ func TestDrawFail(t *testing.T) {
 	}
 }
 
-func BenchmarkDraw10(t *testing.B) {
-	test := concatifyTests[1]
+func BenchmarkDraw20(t *testing.B) {
 	for n := 0; n < 10; n++ {
-		_, _ = concatify.NewVertical(test.paths)
-		_, _ = concatify.NewHorizontal(test.paths)
-
+		_, _ = concatify.NewVertical(concatifyTests[1].paths)
+		_, _ = concatify.NewHorizontal(concatifyTests[1].paths)
 	}
-	remove(test.result)
+}
+
+func BenchmarkDrawGrid(t *testing.B) {
+	_, _ = concatify.NewGrid(concatifyTests[2].paths, 2, 3)
 }
 
 func openAndDecode(filepath string) (image.Image, string, error) {
