@@ -1,6 +1,10 @@
+/*
+	Package concatify implements a high-level API to concat images.
+*/
 package concatify
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -8,14 +12,14 @@ import (
 	"os"
 )
 
-type Arrangment string
+type arrangment string
 
-var orientation Arrangment
+var orientation arrangment
 
 const (
-	Vertical   Arrangment = "vertical"
-	Horizontal Arrangment = "horizontal"
-	Grid       Arrangment = "grid"
+	vertical   arrangment = "vertical"
+	horizontal arrangment = "horizontal"
+	grid       arrangment = "grid"
 )
 
 type pixel struct {
@@ -23,81 +27,53 @@ type pixel struct {
 	Color color.Color
 }
 
-type ConcatImage struct {
-	Sources    []string
-	Strategy   concatStrategy
-	Params     concatParams
-	finalImage *image.RGBA
-}
-
 type concatParams struct {
-	Display  Arrangment
+	Display  arrangment
 	SameSize bool
-	Rows     int
-	Cols     int
+	Rows     int64
+	Cols     int64
+	offsetW  int
+	offsetH  int
 }
 
-type concatStrategy func([]image.Image, concatParams) (pixels []*pixel, w int, h int)
-
-func verticalConcatStrategy(images []image.Image, params concatParams) (pixels []*pixel, w int, h int) {
-	w, h = 0, 0
-	for _, img := range images {
-		if img == nil {
-			continue
-		}
-		imgPixels := decodePixelsFromImage(img, 0, h)
-		if img.Bounds().Max.X > w {
-			w = img.Bounds().Max.X
-		}
-		h += img.Bounds().Max.Y
-		pixels = append(pixels, imgPixels...)
+func defaultParams(display arrangment) concatParams {
+	switch display {
+	case grid:
+		return concatParams{"grid", true, 1, 1, 0, 0}
+	case horizontal:
+		return concatParams{"horizontal", true, 1, 1, 0, 0}
+	case vertical:
+		return concatParams{"vertical", true, 1, 1, 0, 0}
 	}
-	return pixels, w, h
+	return concatParams{"vertical", true, 1, 1, 0, 0}
+
 }
 
-func horizontalConcatStrategy(images []image.Image, params concatParams) (pixels []*pixel, w int, h int) {
-	w, h = 0, 0
-	for _, img := range images {
-		imgPixels := decodePixelsFromImage(img, w, 0)
-		if img.Bounds().Max.Y > h {
-			h = img.Bounds().Max.Y
-		}
-		w += img.Bounds().Max.X
-		pixels = append(pixels, imgPixels...)
-	}
-
-	return pixels, w, h
+func (cp *concatParams) SetOffset(offW, offH int) {
+	cp.offsetW = offW
+	cp.offsetH = offH
 }
 
-func gridConcatStrategy(images []image.Image, params concatParams) (pixels []*pixel, w int, h int) {
-	w, h = 0, 0
-	for _, img := range images {
-		imgPixels := decodePixelsFromImage(img, 0, h)
-		if img.Bounds().Max.X > w {
-			w = img.Bounds().Max.X
-		}
-		h += img.Bounds().Max.Y
-		pixels = append(pixels, imgPixels...)
-	}
-	return pixels, w, h
+func (cp *concatParams) SetDimension(rows, cols int64) {
+	cp.Rows = rows
+	cp.Cols = cols
 }
 
-// func NewGrid(sources []string, rows, columns int) (*ConcatImage, error) {
-// 	return new(sources, concatParams{"grid", true, 1, 1})
-// }
+func (cp concatParams) GetOffset() (int, int) {
+	return cp.offsetW, cp.offsetH
+}
 
 func new(sources []string, params concatParams) (*ConcatImage, error) {
-
 	cimg := &ConcatImage{}
 	cimg.Sources = sources
 	cimg.Params = params
 
 	switch params.Display {
-	case Vertical:
+	case vertical:
 		cimg.Strategy = verticalConcatStrategy
-	case Horizontal:
+	case horizontal:
 		cimg.Strategy = horizontalConcatStrategy
-	case Grid:
+	case grid:
 		cimg.Strategy = gridConcatStrategy
 	default:
 		panic(params.Display)
@@ -106,6 +82,14 @@ func new(sources []string, params concatParams) (*ConcatImage, error) {
 	err := cimg.draw()
 
 	return cimg, err
+}
+
+// ConcatImageContain
+type ConcatImage struct {
+	Sources    []string
+	Strategy   concatStrategy
+	Params     concatParams
+	finalImage *image.RGBA
 }
 
 func (cimg *ConcatImage) draw() error {
@@ -136,6 +120,7 @@ func (cimg *ConcatImage) draw() error {
 	return nil
 }
 
+// Save file to path
 func (cimg *ConcatImage) Save(path string) {
 	out, err := os.Create(path)
 	if err != nil {
@@ -148,10 +133,20 @@ func (cimg *ConcatImage) Save(path string) {
 	}
 }
 
+func NewGrid(sources []string, rows, cols int64) (*ConcatImage, error) {
+	var params concatParams
+	params = defaultParams("grid")
+	if len(sources) != int(rows*cols) {
+		return nil, fmt.Errorf("#sources = %d, %dx%d = %d", len(sources), rows, cols, rows*cols)
+	}
+	params.SetDimension(rows, cols)
+	return new(sources, params)
+}
+
 func NewVertical(sources []string) (*ConcatImage, error) {
-	return new(sources, concatParams{"vertical", true, 1, 1})
+	return new(sources, defaultParams("vertical"))
 }
 
 func NewHorizontal(sources []string) (*ConcatImage, error) {
-	return new(sources, concatParams{"horizontal", true, 1, 1})
+	return new(sources, defaultParams("horizontal"))
 }
